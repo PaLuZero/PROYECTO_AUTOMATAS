@@ -1,72 +1,32 @@
-"""Reloj global: oscilador DIA <-> NOCHE con periodo configurable.
+class RelojMundo:
+    def __init__(self, duracion_fase=40):
+        self.pasos_totales = 0
+        self.duracion_fase = duracion_fase  # Pasos antes de cambiar de fase (duplicado para más tiempo)
+        self.es_crepusculo = False
 
-Cada `periodo` ticks la fase cambia. Las tiendas y el mapa consultan
-`fase_actual()` / `esta_abierto()`. Soporta observadores (callbacks).
-"""
+    def avanzar(self, pasos=1):
+        """Avanza el reloj y retorna si hubo cambio de fase."""
+        self.pasos_totales += pasos
+        nuevo_crepusculo = (self.pasos_totales // self.duracion_fase) % 2 == 1
+        cambio = (nuevo_crepusculo != self.es_crepusculo)
+        self.es_crepusculo = nuevo_crepusculo
+        return cambio, self.obtener_estado()
 
-DIA = "DIA"
-NOCHE = "NOCHE"
+    def obtener_estado(self):
+        pasos_en_fase = self.pasos_totales % self.duracion_fase
+        progreso = pasos_en_fase / self.duracion_fase
+        bloques = int(progreso * 6)
+        barra = "[" + "#" * bloques + "-" * (6 - bloques) + "]"
 
+        if self.es_crepusculo:
+            nombre = "CREPÚSCULO (Inestable)"
+        else:
+            nombre = "MUNDO NORMAL (Estable)"
 
-class RelojGlobal:
-    def __init__(self, periodo=10, fase_inicial=DIA):
-        if periodo < 1:
-            raise ValueError("El periodo debe ser >= 1")
-        if fase_inicial not in (DIA, NOCHE):
-            raise ValueError("Fase inicial invalida")
-        self.periodo = periodo
-        self._fase_inicial = fase_inicial
-        self.ticks = 0
-        self._observadores = []
-
-    # ---------- consulta ----------
-    def fase_actual(self):
-        ciclos = (self.ticks // self.periodo) % 2
-        if self._fase_inicial == DIA:
-            return DIA if ciclos == 0 else NOCHE
-        return NOCHE if ciclos == 0 else DIA
-
-    def esta_abierto(self):
-        """Los comercios abren de DIA."""
-        return self.fase_actual() == DIA
-
-    def ticks_para_cambio(self):
-        return self.periodo - (self.ticks % self.periodo)
-
-    # ---------- avance ----------
-    def tick(self, n=1):
-        """Avanza n ticks y notifica si la fase cambio. Devuelve la fase."""
-        for _ in range(n):
-            antes = self.fase_actual()
-            self.ticks += 1
-            despues = self.fase_actual()
-            if antes != despues:
-                for cb in list(self._observadores):
-                    cb(despues, self.ticks)
-        return self.fase_actual()
-
-    def reiniciar(self):
-        self.ticks = 0
-
-    # ---------- patron observador ----------
-    def suscribir(self, callback):
-        """callback(fase, ticks) se llama cada vez que cambia la fase."""
-        self._observadores.append(callback)
-
-    def desuscribir(self, callback):
-        if callback in self._observadores:
-            self._observadores.remove(callback)
-
-    def __repr__(self):
-        return f"RelojGlobal(ticks={self.ticks}, fase={self.fase_actual()}, periodo={self.periodo})"
-
-
-# Instancia compartida por todo el mundo (mapa y tiendas)
-RELOJ = RelojGlobal(periodo=10)
-
-
-if __name__ == "__main__":
-    r = RelojGlobal(periodo=3)
-    r.suscribir(lambda fase, t: print(f"  >> Cambio de fase: {fase} (tick {t})"))
-    for _ in range(8):
-        print(r.tick(), "| ticks:", r.ticks, "| abierto:", r.esta_abierto())
+        return {
+            "es_crepusculo": self.es_crepusculo,
+            "nombre": nombre,
+            "pasos_fase": pasos_en_fase,
+            "duracion": self.duracion_fase,
+            "barra": barra
+        }
