@@ -1,4 +1,3 @@
-
 import os
 import math
 import random
@@ -64,9 +63,9 @@ def obtener_sprite_combate(heroe, estado, carpetas_buscar):
 def dibujar_overlay_batalla(pantalla, batalla, fuentes, ancho_pantalla=800, alto_pantalla=600):
     carpetas_buscar = ["assets/sprites", "assets", "sprites"]
 
-    
-    # Datos en vivo del enemigo
-    
+    # --------------------------------------------------------------------------
+    # 1. DATOS EN VIVO DEL ENEMIGO
+    # --------------------------------------------------------------------------
     e_obj = getattr(batalla, "enemigo_info", None) or getattr(batalla, "enemigo", None)
 
     nombre_enemigo = getattr(batalla, "nombre_enemigo", "Sombra Hostil")
@@ -83,9 +82,7 @@ def dibujar_overlay_batalla(pantalla, batalla, fuentes, ancho_pantalla=800, alto
     val_hp = max(0, int(hp_actual))
     val_max = max(1, int(max_hp))
 
-    
-    # Fondo oscuro y efectos
-    
+    # 2. FONDO OSCURO Y EFECTOS
     fondo_batalla = pygame.Surface((ancho_pantalla, alto_pantalla))
     fondo_batalla.fill((12, 10, 16))
     pantalla.blit(fondo_batalla, (0, 0))
@@ -99,9 +96,7 @@ def dibujar_overlay_batalla(pantalla, batalla, fuentes, ancho_pantalla=800, alto
     tinte_dano = getattr(batalla, "anim_recibiendo_dano", False) and (tiempo_ms % 150 < 75)
     esta_cargando = getattr(batalla, "enemigo_cargando_ataque", False)
 
-    
-    # Dibujar enemigo (A LA DERECHA)
-    
+    # 3. DIBUJAR ENEMIGO (A LA DERECHA)
     if not es_grupo:
         ex = 540 + shake_x
         ey = 160 + shake_y
@@ -174,9 +169,7 @@ def dibujar_overlay_batalla(pantalla, batalla, fuentes, ancho_pantalla=800, alto
             txt_num_sub = fuentes["dialogo"].render(f"{sub_hp}/{sub_max}", True, (220, 220, 220))
             pantalla.blit(txt_num_sub, (cx - txt_num_sub.get_width() // 2, by - 16))
 
-    
-    # Renderizado de los heroes
-    
+    # 4. RENDERIZADO DE LOS HÉROES
     heroes_pos = [
         (90, 175),   # Líder
         (225, 190)   # Apoyo
@@ -226,9 +219,7 @@ def dibujar_overlay_batalla(pantalla, batalla, fuentes, ancho_pantalla=800, alto
         if sprite_heroe:
             pantalla.blit(sprite_heroe, (hx + offset_x, hy + offset_y))
 
-    
-    # Bitacora y registro en pantalla
-    
+    # 5. BITÁCORA Y REGISTRO EN PANTALLA
     log_rect = pygame.Rect(40, 385, ancho_pantalla - 80, 32)
     pygame.draw.rect(pantalla, (20, 16, 25), log_rect)
     pygame.draw.rect(pantalla, (70, 60, 80), log_rect, 1)
@@ -237,9 +228,7 @@ def dibujar_overlay_batalla(pantalla, batalla, fuentes, ancho_pantalla=800, alto
     txt_log = fuentes["dialogo"].render(str(msg_actual), True, (245, 230, 210))
     pantalla.blit(txt_log, (log_rect.x + 12, log_rect.y + 8))
 
-    
-    # Paneles de comandos y estado del grupo
-    
+    # 6. PANELES DE COMANDOS Y ESTADO DEL GRUPO
     h_panel = 160
     y_panel = alto_pantalla - h_panel - 15
 
