@@ -1,9 +1,8 @@
-
 import random
 
 class BatallaTurnos:
     def __init__(self, pareja_activa, stats_heroes, enemigo, inventario_objetos):
-        # Filtro de entrada de cualquier valor nulo o inválido
+        # Filtra de entrada cualquier valor nulo o inválido
         self.pareja_activa = [h for h in pareja_activa if h and h in stats_heroes]
         if not self.pareja_activa:
             self.pareja_activa = ["Sidius Storm"]
@@ -81,9 +80,8 @@ class BatallaTurnos:
         if len(self.mensajes_log) > 8:
             self.mensajes_log.pop(0)
 
-    
-    # PLanificacion de las Acciones del jugador
-  
+
+    # PLANIFICACIÓN DE ACCIONES
     def encolar_accion(self, tipo_accion, dato_extra=None):
         if self.fase_combate != "TURNO_JUGADOR":
             return
@@ -95,7 +93,7 @@ class BatallaTurnos:
             "extra": dato_extra
         })
 
-        # Buscar al siguiente héroe con vida para el turno
+        # Buscar el siguiente héroe vivo
         self.indice_heroe_turno += 1
         while (self.indice_heroe_turno < len(self.pareja_activa) and 
                self.stats_party[self.pareja_activa[self.indice_heroe_turno]]["hp"] <= 0):
@@ -146,9 +144,7 @@ class BatallaTurnos:
             self.fijar_mensaje("¡No pudieron escapar! Las sombras cierran el paso.")
             self.generar_contraataque_enemigo_solitario()
 
-    
-    # Cosntruccion de la Secuencia de Resolucion
-    
+    # CONSTRUCCIÓN DE LA SECUENCIA DE RESOLUCIÓN
     def generar_cola_resolucion(self):
         self.cola_eventos = []
 
@@ -262,9 +258,7 @@ class BatallaTurnos:
         self.fase_combate = "RESOLUCION"
         self.avanzar_evento_siguiente()
 
-    
-    # Resolucion paso a paso con [ESPACIO]
-    
+    # RESOLUCIÓN PASO A PASO CON [ESPACIO]
     def avanzar_evento_siguiente(self):
         if not self.cola_eventos:
             for h in self.en_guardia:
