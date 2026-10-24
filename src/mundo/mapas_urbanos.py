@@ -1,107 +1,90 @@
-"""Mapas urbanos como matrices (list[list[str]]) con backtracking por pila.
+# 0 = Suelo Pasto
+# 1 = Muro Perimetral
+# 2 = Portal dimensional / salida
+# 3 = Núcleo del Santuario
+# 4 = Puerta Forja
+# 5 = Puerta Biblioteca
+# 6 = Puerta Botica
+# 13 = Camino de adoquines de piedra
 
-Leyenda: '#' pared, '.' calle, 'B' botica, 'A' armeria, '@' jugador.
-Coordenadas: x = columna, y = fila.
-"""
-
-try:
-    from .automata_pila import pila_simple
-except ImportError:  # ejecucion directa del archivo
-    from automata_pila import pila_simple
-
-LEYENDA = {"#": "pared", ".": "calle", "B": "botica", "A": "armeria", "@": "jugador"}
-
-DIRECCIONES = {
-    "w": (0, -1), "arriba": (0, -1), "norte": (0, -1),
-    "s": (0, 1), "abajo": (0, 1), "sur": (0, 1),
-    "a": (-1, 0), "izquierda": (-1, 0), "oeste": (-1, 0),
-    "d": (1, 0), "derecha": (1, 0), "este": (1, 0),
-}
-
-MAPA_CIUDAD = [
-    "###########",
-    "#@..#.....#",
-    "#.#.#.###.#",
-    "#.#...#B..#",
-    "#.#####.###",
-    "#...A...#.#",
-    "###########",
+MAPA_EXTERIOR_CIUDAD = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1],
+    [1, 0, 1, 4, 1, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 1, 5, 1, 0, 1],
+    [1, 0, 0, 13, 0, 0, 0, 0, 0, 13, 13, 0, 0, 0, 0, 0, 13, 0, 0, 1],
+    [1, 0, 0, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 0, 0, 0, 13, 13, 0, 0, 0, 0, 1, 1, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 0, 0, 0, 13, 13, 0, 0, 0, 0, 1, 1, 1, 0, 1],
+    [1, 0, 1, 6, 1, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ]
 
+# INTERIOR FORJA / ARMERÍA (Muros, yunque y mostradores)
+# 20 columnas x 15 filas (800x600 px a escala de 40 px por tile)
+# 1 = Paredes, horno de fundición, barriles, lingotes y yunques (SÓLIDO)
+# 7 = Mostrador largo de herrería (bloquea el paso pero permite interactuar con [E])
+# 9 = Tapete rojo de salida hacia la ciudad
+# 0 = Suelo de piedra transitable
 
-class MapaUrbano:
-    def __init__(self, filas=None):
-        self.base = []                  # matriz sin el jugador
-        self.x = 0
-        self.y = 0
-        self.historial = pila_simple()  # pila LIFO de posiciones visitadas
-        self.cargar_mapa(filas or MAPA_CIUDAD)
+INTERIOR_FORJA = [
+    # 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 0: Muro superior
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 1: Estantes altos
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 2: Armas y chimenea
+    [ 1,  1,  1,  1,  1,  1,  0,  1,  1,  0,  1,  1,  0,  0,  1,  1,  1,  1,  1,  1], # 3: Yunques (x=7,8 y x=10,11)
+    [ 1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1], # 4: Pasillo de Carlos (Carlos en x=12, y=4)
+    [ 1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1], # 5: Detrás del mostrador
+    [ 1,  1,  1,  0,  0,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  0,  0,  1,  1,  1], # 6: Mostrador de herramientas
+    [ 1,  1,  1,  0,  0,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  0,  0,  1,  1,  1], # 7: Cajas de minerales
+    [ 1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1], # 8: Suelo frente al mostrador
+    [ 1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1], # 9: Suelo transitable
+    [ 1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1], # 10: Placa de metal en el suelo
+    [ 1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1], # 11: Mesa de forja derecha
+    [ 1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1], # 12: Pasillo hacia la puerta
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  9,  9,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 13: Tapete de salida
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  9,  9,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]  # 14: Muro inferior
+]
 
-    def cargar_mapa(self, filas):
-        """Carga una matriz (lista de strings o de listas). Busca '@' como inicio."""
-        matriz = [list(f) for f in filas]
-        inicio = None
-        for y, fila in enumerate(matriz):
-            for x, c in enumerate(fila):
-                if c == "@":
-                    inicio = (x, y)
-                    matriz[y][x] = "."
-        if inicio is None:
-            raise ValueError("El mapa debe tener un '@' como posicion inicial")
-        self.base = matriz
-        self.x, self.y = inicio
-        self.historial = pila_simple()
-        self.historial.push(inicio)
+# INTERIOR BIBLIOTECA DE ELOWEN
+INTERIOR_BIBLIOTECA = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+]
 
-    def es_transitable(self, x, y):
-        if y < 0 or y >= len(self.base) or x < 0 or x >= len(self.base[y]):
-            return False
-        return self.base[y][x] != "#"
+# Matriz calibrada a la imagen: 20 columnas (x=0..19) x 15 filas (y=0..14)
+# 1 = Muros, repisas superiores, chimenea, caldero y camas (SÓLIDO)
+# 7 = Mostrador de Vaelira (bloquea el paso pero permite interactuar con [E])
+# 9 = Alfombra de salida inferior hacia la ciudad
+# 0 = Suelo de madera y alfombra roja central (TRANSITABLE)
 
-    def mover(self, direccion):
-        """Mueve al jugador. Guarda la posicion previa en la pila. True si se movio."""
-        d = DIRECCIONES.get(str(direccion).lower())
-        if d is None:
-            return False
-        nx, ny = self.x + d[0], self.y + d[1]
-        if not self.es_transitable(nx, ny):
-            return False
-        self.historial.push((nx, ny))
-        self.x, self.y = nx, ny
-        return True
-
-    def volver_atras(self):
-        """Backtracking: desapila la posicion actual y regresa a la anterior."""
-        if len(self.historial) <= 1:        # solo queda la posicion inicial
-            return False
-        self.historial.pop()
-        self.x, self.y = self.historial.peek()
-        return True
-
-    def edificio_actual(self):
-        """'B' si esta en la botica, 'A' en la armeria, None en otro caso."""
-        c = self.base[self.y][self.x]
-        return c if c in ("B", "A") else None
-
-    def posicion(self):
-        return (self.x, self.y)
-
-    def a_texto(self):
-        filas = []
-        for y, fila in enumerate(self.base):
-            filas.append("".join("@" if (x, y) == (self.x, self.y) else c
-                                 for x, c in enumerate(fila)))
-        return "\n".join(filas)
-
-    def mostrar_mapa(self):
-        print(self.a_texto())
-
-
-if __name__ == "__main__":
-    m = MapaUrbano()
-    m.mostrar_mapa()
-    for paso in ["d", "d", "s", "s", "d"]:
-        print(f"\nmover({paso}) ->", m.mover(paso))
-    m.mostrar_mapa()
-    print("\nVolver atras 2 veces:", m.volver_atras(), m.volver_atras(), m.posicion())
-    m.mostrar_mapa()
+INTERIOR_BOTICA = [
+    # 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 0: Techo y vigas
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 1: Estantes altos
+    [ 1,  1,  1,  1,  1,  1,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 2: Pasillo interior Vaelira (x=6..8)
+    [ 1,  1,  1,  7,  7,  7,  7,  7,  7,  7,  7,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 3: Mostrador sólido superior
+    [ 1,  1,  1,  7,  7,  7,  7,  7,  7,  7,  7,  1,  0,  0,  0,  0,  1,  1,  1,  1], # 4: Cajones del mostrador
+    [ 1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1], # 5: Suelo frente al mostrador (hablar aquí)
+    [ 1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1], # 6: Alfombra central
+    [ 1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1], # 7: Alfombra central
+    [ 1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1], # 8: Alfombra central
+    [ 1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  1,  1], # 9: Alrededor de la cama inferior
+    [ 1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  1,  1], # 10: Cama inferior central
+    [ 1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1], # 11: Pasillo inferior
+    [ 1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1], # 12: Frente al tapete rojo
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  9,  9,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1], # 13: Tapete de salida
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  9,  9,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]  # 14: Muro inferior
+]

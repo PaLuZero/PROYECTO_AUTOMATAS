@@ -1,36 +1,41 @@
-"""Armeria (armas y armaduras). Reutiliza la clase Tienda de tienda_botica."""
+CATALOGO_ARMERIA = [
+    {
+        "id": "espada_hierro",
+        "nombre": "Filo Rúnico",
+        "precio": 50,
+        "ranura": "arma",
+        "bono": 8,
+        "desc": "+8 ATK. Incrementa el daño base de los ataques físicos."
+    },
+    {
+        "id": "coraza_malla",
+        "nombre": "Cota de Escamas",
+        "precio": 45,
+        "ranura": "armadura",
+        "bono": 15,
+        "desc": "+15 HP Max. Refuerza la resistencia general del portador."
+    },
+    {
+        "id": "anillo_eter",
+        "nombre": "Banda de Resonancia",
+        "precio": 60,
+        "ranura": "accesorio",
+        "bono": 5,
+        "desc": "+5 MP Max. Amplía la reserva de energía para habilidades."
+    }
+]
 
-try:
-    from .tienda_botica import Tienda, Jugador
-    from .reloj_global import RELOJ
-except ImportError:  # ejecucion directa del archivo
-    from tienda_botica import Tienda, Jugador
-    from reloj_global import RELOJ
-
-
-def crear_armeria(reloj=None):
-    return Tienda(
-        "Armeria",
-        [
-            ("espada de hierro", 60, 3),
-            ("arco corto", 50, 3),
-            ("daga", 25, 5),
-            ("escudo de madera", 40, 4),
-            ("armadura de cuero", 70, 2),
-            ("armadura de acero", 150, 1),
-        ],
-        reloj=reloj,
-    )
-
-
-if __name__ == "__main__":
-    armeria = crear_armeria()
-    heroe = Jugador("Hugo", oro=200)
-    armeria.listar()
-    print(armeria.comprar("espada de hierro", heroe))
-    print(armeria.comprar("escudo de madera", heroe))
-    print(armeria.comprar("armadura de acero", heroe))   # oro insuficiente
-    print("Inventario:", heroe.inventario.elementos(), "| oro:", heroe.oro)
-    print(armeria.deshacer_compra(heroe))                # saca el escudo (LIFO)
-    print(armeria.vender("espada de hierro", heroe))
-    print("Inventario:", heroe.inventario.elementos(), "| oro:", heroe.oro)
+def intentar_comprar_armeria(indice_item, monedas_actuales, inventario_actual):
+    """
+    Gestiona la compra de equipamiento en la forja/armería de Doran.
+    Retorna: (exito: bool, monedas_restantes: int, mensaje: str)
+    """
+    if 0 <= indice_item < len(CATALOGO_ARMERIA):
+        item = CATALOGO_ARMERIA[indice_item]
+        if monedas_actuales >= item["precio"]:
+            monedas_actuales -= item["precio"]
+            inventario_actual.append(item["nombre"])
+            return True, monedas_actuales, f"¡Forjaste [{item['nombre']}] por {item['precio']} oro!"
+        else:
+            return False, monedas_actuales, f"Oro insuficiente. Doran pide {item['precio']} monedas."
+    return False, monedas_actuales, "Objeto no válido."
