@@ -1,11 +1,3 @@
-"""
-MÓDULO: Gestor de Puzles Urbanos y Minijuegos - Hysteria: The Other Side
-- Sincronización de pistones de vapor (Timing de barra para Sidius).
-- Secuencia de runas mnemónicas (Memoria para Selene).
-- Sincronización de Brecha Cuántica (Reacción a símbolos dimensionales para Noctis).
-- Prismas de penumbra / Faroles (Interruptores lógicos para Athina).
-"""
-
 import time
 import random
 
@@ -98,7 +90,6 @@ class GestorPuzlesCiudad:
             }
 
         elif tipo == "REACCION_PARADOJA":
-            # 3 Frecuencias posibles con símbolo y nombre comprensible
             frecuencias = [
                 {"id": "1", "nombre": "Frecuencia Alfa", "simbolo": "▲ ALFA", "color": (80, 200, 255)},
                 {"id": "2", "nombre": "Frecuencia Beta", "simbolo": "◆ BETA", "color": (230, 80, 255)},
