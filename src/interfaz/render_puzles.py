@@ -1,8 +1,3 @@
-"""
-MÓDULO: Renderizado de Overlays de Minijuegos y Puzles - Hysteria: The Other Side
-- Dibuja cada minijuego con interfaces limpias, legibles y barras de tiempo animadas.
-"""
-
 import time
 import math
 import pygame
@@ -31,9 +26,7 @@ def dibujar_overlay_puzle(pantalla, puzle, fuentes, ancho_pantalla=800, alto_pan
 
     tipo = puzle["tipo"]
 
-    # --------------------------------------------------------------------------
     # 1. TIMING DE BARRA (SIDIUS)
-    # --------------------------------------------------------------------------
     if tipo == "TIMING_BARRA":
         txt_desc = fuentes["dialogo"].render("Presiona [ESPACIO] cuando la aguja entre en la zona verde.", True, (220, 220, 220))
         pantalla.blit(txt_desc, (cx + 25, cy + 65))
@@ -66,9 +59,7 @@ def dibujar_overlay_puzle(pantalla, puzle, fuentes, ancho_pantalla=800, alto_pan
         lbl_espacio = fuentes["texto"].render("[ESPACIO] Aplicar Fuerza Hidráulica", True, (255, 255, 255))
         pantalla.blit(lbl_espacio, (cx + ancho_caja // 2 - lbl_espacio.get_width() // 2, cy + 240))
 
-    # --------------------------------------------------------------------------
     # 2. MEMORIA DE RUNAS (SELENE)
-    # --------------------------------------------------------------------------
     elif tipo == "MEMORIA_RUNAS":
         t_pasado = time.time() - puzle["tiempo_inicio"]
         t_memo = puzle["tiempo_memorizar"]
@@ -92,9 +83,7 @@ def dibujar_overlay_puzle(pantalla, puzle, fuentes, ancho_pantalla=800, alto_pan
             txt_ing = fuentes["texto"].render(f"Ingresadas: {ingresado_str}", True, (200, 240, 200))
             pantalla.blit(txt_ing, (cx + 50, cy + 150))
 
-    # --------------------------------------------------------------------------
     # 3. REACCIÓN DE BRECHA CUÁNTICA CON SÍMBOLOS (NOCTIS)
-    # --------------------------------------------------------------------------
     elif tipo == "REACCION_PARADOJA":
         t_restante = max(0.0, puzle["tiempo_limite"] - (time.time() - puzle["tiempo_inicio"]))
         pct_t = max(0.0, min(1.0, t_restante / puzle["tiempo_limite"]))
@@ -134,9 +123,7 @@ def dibujar_overlay_puzle(pantalla, puzle, fuentes, ancho_pantalla=800, alto_pan
             t_nom = fuentes["dialogo"].render(freq["simbolo"], True, freq["color"])
             pantalla.blit(t_nom, (rect_btn.centerx - t_nom.get_width() // 2, rect_btn.y + 35))
 
-    # --------------------------------------------------------------------------
     # 4. FAROLES E INTERRUPTORES (ATHINA)
-    # --------------------------------------------------------------------------
     elif tipo == "FAROLES_INTERRUPTORES":
         txt_desc = fuentes["dialogo"].render("Extingue todos los prismas. Cada interruptor altera a sus vecinos.", True, (220, 220, 220))
         pantalla.blit(txt_desc, (cx + 25, cy + 65))
