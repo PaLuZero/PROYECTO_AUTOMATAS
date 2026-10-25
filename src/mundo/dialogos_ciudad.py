@@ -1,11 +1,3 @@
-"""
-MÓDULO: Diálogos de Ciudad - Hysteria: The Other Side
-- Estructura fija de 3 opciones por interacción [1], [2] y [3].
-- Diálogos naturales, cercanos y expresivos.
-- Opciones especiales de reacción con héroes de la vanguardia.
-- Fases Mundo Normal y Crepúsculo diferenciadas.
-"""
-
 ARBOLES_DIALOGO = {
     # --------------------------------------------------------------------------
     # 1. BOTICA: Vaelira Contriel
